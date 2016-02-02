@@ -1,6 +1,3 @@
-.. image:: https://raw.githubusercontent.com/score-framework/py.doc/master/docs/score-banner.png
-    :target: http://score-framework.org
-
 `The SCORE Framework`_ is a collection of harmonized python and javascript
 libraries for the development of large scale web projects. Powered by strg.at_.
 
@@ -8,20 +5,13 @@ libraries for the development of large scale web projects. Powered by strg.at_.
 .. _strg.at: http://strg.at
 
 
-score.cli
-=========
+score.projects
+==============
 
-This module provides features for conveniently developing command line
-interfaces to other modules. It makes use of the excellent click_ library and
-currently provides two separate features for supporting CLI development:
-command aggregation and configuration management.
+This module provides convenient access and management of different projects
+using The SCORE Framework.
 
-.. _click: http://click.pocoo.org
-
-The `narrative documentation of score.cli`__ contains all the information you
-need to put this module to good use.
-
-__ http://www.score-framework.org/doc/python/cli/
+This module is a work in progress, thus currently poorly documented :-/
 
 
 License
