@@ -17,8 +17,9 @@ setup(
     zip_safe=False,
     license='LGPL',
     install_requires=[
-        'score.http', 'score.db', 'score.css', 'score.js', 'score.webassets',
-        'score.dbgsrv', 'score.ctx', 'score.tpl', 'score.html', 'score.svg',
-        'score.auth', 'score.session', 'score.kvcache', 'score.jsapi',
+        'score.http', 'score.db', 'score.cli', 'score.css', 'score.js',
+        'score.webassets', 'score.dbgsrv', 'score.ctx', 'score.tpl',
+        'score.html', 'score.svg', 'score.auth', 'score.session',
+        'score.kvcache', 'sqlalchemy_utils', 'jinja2',
     ],
 )

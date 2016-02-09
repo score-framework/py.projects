@@ -26,9 +26,12 @@
 
 import re
 import os
-from score.cli.conf import confroot, addconf, setdefault
-import venv
-import subprocess
+from score.cli.conf import confroot
+from vex.main import _main as vex_main
+
+
+def vex(*args):
+    vex_main(os.environ, args)
 
 
 def copytpl(src, dst, vars):
@@ -54,7 +57,7 @@ class Project:
         self.name = name
         self.conf = conf
         self.root = os.path.join(conf.root, name)
-        self.venvdir = os.path.join(confroot(), 'projects', name)
+        self.venvdir = os.path.join(confroot(global_=True), 'project', name)
 
     def create(self, template='web'):
         # copy scaffold
@@ -68,18 +71,25 @@ class Project:
             '{ucname}': self.name.capitalize(),
         })
         # create virtualenv
-        venv.create(self.venvdir, clear=True, symlinks=False, with_pip=True)
+        vex('--path', self.venvdir, '--make', 'true')
+        # install the project
+        vex('--path', self.venvdir, 'pip', 'install', '--editable', self.root)
         # register configurations
         prodconf = os.path.join(self.root, 'production.conf')
         devconf = os.path.join(self.root, 'development.conf')
         localconf = os.path.join(self.root, 'local.conf')
-        addconf('production', prodconf, root=self.venvdir)
-        addconf('development', devconf, root=self.venvdir)
-        addconf('local', localconf, root=self.venvdir)
-        setdefault('local', root=self.venvdir)
-        # install the project
-        python = os.path.join(self.venvdir, 'bin', 'python')
-        subprocess.check_call([python, 'setup.py', 'develop'], cwd=self.root)
+        vex('--path', self.venvdir, 'score', 'conf', 'add', prodconf)
+        vex('--path', self.venvdir, 'score', 'conf', 'add', devconf)
+        vex('--path', self.venvdir, 'score', 'conf', 'add', '-d', localconf)
+
+    def create_venv(self):
+        import vex.options
+        import vex.make
+        options = vex.options.get_options(['--path', self.venvdir])
+        vex.make.handle_make(os.environ, options, self.venvdir)
+
+    def workon(self):
+        vex('--path', self.venvdir)
 
     @property
     def exists(self):

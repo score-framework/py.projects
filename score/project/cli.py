@@ -27,17 +27,34 @@
 import click
 
 
-@click.command()
+@click.group()
+def main():
+    pass
+
+
+@main.command()
 @click.argument('name')
 @click.pass_context
 def create(clickctx, name):
-    projects = clickctx.obj['conf'].load('projects')
-    projects.create(name)
+    project = clickctx.obj['conf'].load('project')
+    project.create(name)
 
 
-@click.command()
+@main.command()
+@click.pass_context
+def list(clickctx):
+    project = clickctx.obj['conf'].load('project')
+    for project in project.all():
+        print(project.name)
+
+
+@main.command()
 @click.argument('name')
 @click.pass_context
-def workon(clickctx, name):
-    projects = clickctx.obj['conf'].load('projects')
-    projects.load(name)
+def load(clickctx, name):
+    project = clickctx.obj['conf'].load('project')
+    project.workon(name)
+
+
+if __name__ == '__main__':
+    main()

@@ -27,6 +27,7 @@
 from score.init import ConfiguredModule
 from .project import Project
 import os
+from score.cli.conf import confroot
 
 
 defaults = {
@@ -37,19 +38,26 @@ defaults = {
 def init(confdict):
     conf = defaults.copy()
     conf.update(confdict)
-    return ConfiguredProjectsModule(os.path.expanduser(conf['root']))
+    return ConfiguredProjectModule(os.path.expanduser(conf['root']))
 
 
-class ConfiguredProjectsModule(ConfiguredModule):
+class ConfiguredProjectModule(ConfiguredModule):
 
     def __init__(self, root):
-        import score.projects
-        super().__init__(score.projects)
+        import score.project
+        super().__init__(score.project)
         self.root = root
 
-    def create(self, name):
-        project = Project(self, name)
-        project.create()
+    def get(self, name):
+        return Project(self, name)
 
-    def load(self, name):
-        pass
+    def create(self, name):
+        self.get(name).create()
+
+    def all(self):
+        venvroot = os.path.join(confroot(global_=True), 'project')
+        for file in os.listdir(venvroot):
+            yield self.get(file)
+
+    def workon(self, name):
+        self.get(name).workon()

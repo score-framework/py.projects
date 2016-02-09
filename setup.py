@@ -32,15 +32,15 @@ with open(os.path.join(here, 'README.rst')) as f:
     README = f.read()
 
 setup(
-    name='score.projects',
+    name='score',
     version='0.0.1',
     description='Manage your projects with The SCORE Framework',
     long_description=README,
     author='strg.at',
     author_email='score@strg.at',
     url='http://score-framework.org',
-    keywords='score framework projects loader',
-    packages=['score', 'score.projects'],
+    keywords='score framework project',
+    packages=['score', 'score.project'],
     namespace_packages=['score'],
     zip_safe=False,
     license='LGPL',
@@ -59,11 +59,11 @@ setup(
     install_requires=[
         'score.cli',
         'score.init',
+        'vex',
     ],
     entry_points={
         'score.cli': [
-            'create = score.projects.cli:create',
-            'workon = score.projects.cli:workon',
+            'project = score.project.cli:main',
         ]
     },
 )

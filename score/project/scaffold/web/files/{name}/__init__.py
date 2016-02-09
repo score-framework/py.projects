@@ -1,4 +1,5 @@
-from score.init import ConfiguredModule
+from score.init import ConfiguredModule, parse_bool
+from webob import Request
 
 
 defaults = {
@@ -20,7 +21,7 @@ class Configured{ucname}Module(ConfiguredModule):
         super().__init__({name})
         self.pregenerate_assets = pregenerate_assets
 
-    def _finalize(self, tpl, js, css):
+    def _finalize(self, ctx, http, tpl, js, css):
         import {name}.db
         tpl.renderer.add_global('html', 'db', {name}.db)
         if self.pregenerate_assets:

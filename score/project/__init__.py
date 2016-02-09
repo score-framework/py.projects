@@ -24,6 +24,6 @@
 # the discretion of STRG.AT GmbH also the competent court, in whose district the
 # Licensee has his registered seat, an establishment or assets.
 
-from ._init import init, ConfiguredProjectsModule
+from ._init import init, ConfiguredProjectModule
 
-__all__ = ('init', 'ConfiguredProjectsModule')
+__all__ = ('init', 'ConfiguredProjectModule')
