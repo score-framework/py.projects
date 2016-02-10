@@ -88,8 +88,8 @@ class Project:
         options = vex.options.get_options(['--path', self.venvdir])
         vex.make.handle_make(os.environ, options, self.venvdir)
 
-    def workon(self):
-        vex('--path', self.venvdir)
+    def spawn_shell(self):
+        vex('--path', self.venvdir, '--cwd', self.root)
 
     @property
     def exists(self):

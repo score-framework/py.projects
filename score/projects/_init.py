@@ -31,7 +31,6 @@ from score.cli.conf import confroot
 
 
 defaults = {
-    'root': '~/projects',
 }
 
 
@@ -52,12 +51,19 @@ class ConfiguredProjectModule(ConfiguredModule):
         return Project(self, name)
 
     def create(self, name):
-        self.get(name).create()
+        project = self.get(name)
+        project.create()
+        return project
 
     def all(self):
         venvroot = os.path.join(confroot(global_=True), 'projects')
-        for file in os.listdir(venvroot):
-            yield self.get(file)
+        try:
+            for file in os.listdir(venvroot):
+                yield self.get(file)
+        except FileNotFoundError:
+            pass
 
-    def workon(self, name):
-        self.get(name).workon()
+    def __iter__(self):
+        return self.all()
+
+    __getitem__ = get
