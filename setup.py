@@ -117,7 +117,7 @@ setup(
     author_email='score@strg.at',
     url='http://score-framework.org',
     keywords='score framework project',
-    packages=['score', 'score.project'],
+    packages=['score', 'score.projects'],
     namespace_packages=['score'],
     zip_safe=False,
     license='LGPL',
@@ -140,7 +140,7 @@ setup(
     ],
     entry_points={
         'score.cli': [
-            'project = score.project.cli:main',
+            'projects = score.projects.cli:main',
         ]
     },
     cmdclass={

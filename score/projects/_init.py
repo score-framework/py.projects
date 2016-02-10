@@ -24,37 +24,40 @@
 # the discretion of STRG.AT GmbH also the competent court, in whose district the
 # Licensee has his registered seat, an establishment or assets.
 
-import click
+from score.init import ConfiguredModule
+from .project import Project
+import os
+from score.cli.conf import confroot
 
 
-@click.group()
-def main():
-    pass
+defaults = {
+    'root': '~/projects',
+}
 
 
-@main.command()
-@click.argument('name')
-@click.pass_context
-def create(clickctx, name):
-    project = clickctx.obj['conf'].load('project')
-    project.create(name)
+def init(confdict):
+    conf = defaults.copy()
+    conf.update(confdict)
+    return ConfiguredProjectModule(os.path.expanduser(conf['root']))
 
 
-@main.command()
-@click.pass_context
-def list(clickctx):
-    project = clickctx.obj['conf'].load('project')
-    for project in project.all():
-        print(project.name)
+class ConfiguredProjectModule(ConfiguredModule):
 
+    def __init__(self, root):
+        import score.projects
+        super().__init__(score.projects)
+        self.root = root
 
-@main.command()
-@click.argument('name')
-@click.pass_context
-def load(clickctx, name):
-    project = clickctx.obj['conf'].load('project')
-    project.workon(name)
+    def get(self, name):
+        return Project(self, name)
 
+    def create(self, name):
+        self.get(name).create()
 
-if __name__ == '__main__':
-    main()
+    def all(self):
+        venvroot = os.path.join(confroot(global_=True), 'projects')
+        for file in os.listdir(venvroot):
+            yield self.get(file)
+
+    def workon(self, name):
+        self.get(name).workon()

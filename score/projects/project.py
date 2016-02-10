@@ -57,7 +57,7 @@ class Project:
         self.name = name
         self.conf = conf
         self.root = os.path.join(conf.root, name)
-        self.venvdir = os.path.join(confroot(global_=True), 'project', name)
+        self.venvdir = os.path.join(confroot(global_=True), 'projects', name)
 
     def create(self, template='web'):
         # copy scaffold
