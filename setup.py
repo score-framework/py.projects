@@ -42,6 +42,7 @@ setup(
     url='http://score-framework.org',
     keywords='score framework project',
     packages=['score', 'score.projects'],
+    include_package_data=True,
     namespace_packages=['score'],
     zip_safe=False,
     license='LGPL',
