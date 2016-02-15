@@ -47,7 +47,6 @@ def copytpl(src, dst, vars):
         for k, v in vars.items():
             content = content.replace(k, v)
         open(dst, 'w').write(content)
-    pass
 
 
 class Project:
