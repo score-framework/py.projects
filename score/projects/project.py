@@ -43,10 +43,14 @@ def copytpl(src, dst, vars):
                 file = file.replace(k, v)
             copytpl(os.path.join(src, filetpl), os.path.join(dst, file), vars)
     else:
-        content = open(src).read()
-        for k, v in vars.items():
-            content = content.replace(k, v)
-        open(dst, 'w').write(content)
+        try:
+            content = open(src).read()
+            for k, v in vars.items():
+                content = content.replace(k, v)
+            open(dst, 'w').write(content)
+        except UnicodeDecodeError:
+            # not a text file, just copy content
+            open(dst, 'wb').write(open(src, 'rb').read())
 
 
 class Project:
