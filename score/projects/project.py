@@ -24,9 +24,9 @@
 # the discretion of STRG.AT GmbH also the competent court, in whose district the
 # Licensee has his registered seat, an establishment or assets.
 
-import re
 import os
 from vex.main import _main as vex_main
+from score.cli.conf import setdefault, addconf
 
 
 def copytpl(src, dst, vars):
@@ -51,6 +51,13 @@ def copytpl(src, dst, vars):
 class Project:
 
     @staticmethod
+    def register(conf, id, folder, venvdir, template='web'):
+        project = Project(conf, id, folder, venvdir)
+        project.recreate_venv()
+        project.install()
+        return project
+
+    @staticmethod
     def create(conf, id, folder, venvdir, template='web'):
         project = Project(conf, id, folder, venvdir)
         assert not project.exists, 'Project already exists'
@@ -64,7 +71,10 @@ class Project:
         })
         project.recreate_venv()
         project.install()
-        project.register_configurations()
+        for name in ('production', 'development', 'local'):
+            addconf(name, os.path.join(project.folder, '%s.conf' % name),
+                    venv=project.venvdir)
+        setdefault('local', venv=project.venvdir)
         return project
 
     def __init__(self, conf, id, folder, venvdir):
@@ -79,14 +89,6 @@ class Project:
     def install(self):
         self.vex('pip', 'install', '--editable', self.folder)
 
-    def register_configurations(self):
-        prodconf = os.path.join(self.folder, 'production.conf')
-        devconf = os.path.join(self.folder, 'development.conf')
-        localconf = os.path.join(self.folder, 'local.conf')
-        self.vex('score', 'conf', 'add', prodconf)
-        self.vex('score', 'conf', 'add', devconf)
-        self.vex('score', 'conf', 'add', '-d', localconf)
-
     def spawn_shell(self):
         self.vex('--path', self.venvdir, '--cwd', self.folder)
 
@@ -94,6 +96,9 @@ class Project:
         environ = os.environ.copy()
         environ['VIRTUAL_ENV_NAME'] = self.name
         vex_main(environ, ('--path', self.venvdir) + args)
+
+    def _relocated(self, folder):
+        self.conf._relocated(self, folder)
 
     @property
     def name(self):

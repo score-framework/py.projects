@@ -27,7 +27,7 @@
 from score.init import ConfiguredModule
 from .project import Project
 import os
-from score.cli.conf import confroot
+from score.cli.conf import confroot, listconf, addconf, get_origin
 import configparser
 
 
@@ -48,10 +48,43 @@ class ConfiguredProjectModule(ConfiguredModule):
         super().__init__(score.projects)
 
     def get(self, name):
+        if isinstance(name, Project):
+            return name
         try:
             return next(p for p in self if p.name == name)
         except StopIteration:
             raise ValueError('No project called "%s"' % name)
+
+    def _relocated(self, name, folder):
+        project = self.get(name)
+        configurations = listconf(include_global=False, venv=project.venvdir)
+        for name, path in configurations.items():
+            path = get_origin(path)
+            if not path.startswith(project.folder):
+                continue
+            relpath = os.path.relpath(path, project.folder)
+            newpath = os.path.join(folder, relpath)
+            addconf(name, newpath, venv=project.venvdir)
+        project.folder = folder
+        project.install()
+        settings = self._read_conf()
+        settings[str(project.id)] = {'folder': folder}
+        self._write_conf(settings)
+        return project
+
+    def register(self, folder):
+        existing = self.all()
+        name = os.path.basename(folder)
+        if name in existing:
+            raise ValueError('Project "%s" already exists' % name)
+        id = self._new_id(existing)
+        venvdir = os.path.join(confroot(global_=True), 'projects',
+                               'venv', str(id))
+        project = Project.register(self, id, folder, venvdir)
+        settings = self._read_conf()
+        settings[str(id)] = {'folder': folder}
+        self._write_conf(settings)
+        return project
 
     def create(self, folder, *, template='web'):
         existing = self.all()

@@ -28,6 +28,7 @@ import click
 import os
 import score.cli.conf
 from score.init import parse_config_file, init as score_init
+import shutil
 import textwrap
 
 
@@ -46,7 +47,7 @@ def main(clickctx):
 @click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
 def create(clickctx, folder):
-    if '/' not in folder:
+    if os.sep not in folder:
         folder = os.path.join(os.getcwd(), folder)
     if os.path.exists(folder):
         raise click.ClickException('Folder already exists')
@@ -56,6 +57,29 @@ def create(clickctx, folder):
         Is that OK?
     ''' % folder).strip(), abort=True)
     clickctx.obj['projects'].create(folder).spawn_shell()
+
+
+@main.command()
+@click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
+@click.pass_context
+def register(clickctx, folder):
+    clickctx.obj['projects'].register(folder)
+
+
+@main.command()
+@click.argument('project')
+@click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
+@click.pass_context
+def move(clickctx, project, folder):
+    project = clickctx.obj['projects'][project]
+    if os.sep not in folder:
+        folder = os.path.join(os.getcwd(), folder)
+    click.confirm(textwrap.dedent('''
+        Will relocate the project %s to the following path:
+        %s
+    ''' % (project.name, folder)).strip(), abort=True)
+    shutil.move(project.folder, folder)
+    project._relocated(folder)
 
 
 @main.command()
