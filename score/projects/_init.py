@@ -28,6 +28,7 @@ from score.init import ConfiguredModule
 from .project import Project
 import os
 from score.cli.conf import confroot
+import configparser
 
 
 defaults = {
@@ -37,33 +38,65 @@ defaults = {
 def init(confdict):
     conf = defaults.copy()
     conf.update(confdict)
-    return ConfiguredProjectModule(os.path.expanduser(conf['root']))
+    return ConfiguredProjectModule()
 
 
 class ConfiguredProjectModule(ConfiguredModule):
 
-    def __init__(self, root):
+    def __init__(self):
         import score.projects
         super().__init__(score.projects)
-        self.root = root
 
     def get(self, name):
-        return Project(self, name)
+        try:
+            return next(p for p in self if p.name == name)
+        except StopIteration:
+            raise ValueError('No project called "%s"' % name)
 
-    def create(self, name):
-        project = self.get(name)
-        project.create()
+    def create(self, folder, *, template='web'):
+        existing = self.all()
+        name = os.path.basename(folder)
+        if name in existing:
+            raise ValueError('Project "%s" already exists' % name)
+        id = self._new_id(existing)
+        venvdir = os.path.join(confroot(global_=True), 'projects',
+                               'venv', str(id))
+        project = Project.create(self, id, folder, venvdir, template=template)
+        settings = self._read_conf()
+        settings[str(id)] = {'folder': folder}
+        self._write_conf(settings)
         return project
 
     def all(self):
-        venvroot = os.path.join(confroot(global_=True), 'projects')
-        try:
-            for file in os.listdir(venvroot):
-                yield self.get(file)
-        except FileNotFoundError:
-            pass
+        return dict((p.name, p) for p in self)
 
     def __iter__(self):
-        return self.all()
+        settings = self._read_conf()
+        for section in settings:
+            if section == 'DEFAULT':
+                continue
+            folder = settings[section]['folder']
+            venvdir = os.path.join(confroot(global_=True), 'projects',
+                                   'venv', section)
+            yield(Project(self, int(section), folder, venvdir))
 
     __getitem__ = get
+
+    def _new_id(self, all_projects=None):
+        if all_projects is None:
+            all_projects = self.all()
+        id = 1
+        if all_projects:
+            id = 1 + max(project.id for project in all_projects.values())
+        return id
+
+    def _read_conf(self):
+        root = os.path.join(confroot(global_=True), 'projects')
+        settings = configparser.ConfigParser()
+        settings.read(os.path.join(root, 'list.conf'))
+        return settings
+
+    def _write_conf(self, settings):
+        root = os.path.join(confroot(global_=True), 'projects')
+        file = os.path.join(root, 'list.conf')
+        settings.write(open(file, 'w'))

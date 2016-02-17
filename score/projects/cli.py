@@ -27,34 +27,13 @@
 import click
 import score.cli.conf
 from score.init import parse_config_file, init as score_init
-import sys
 import textwrap
-import os
 
 
 @click.group()
 @click.pass_context
 def main(clickctx):
     conf = parse_config_file(score.cli.conf.globalconf())
-    if 'projects' not in conf:
-        default = '~/Projects'
-        if sys.platform in ('linux', 'freebsd'):
-            default = '~/projects'
-        target = click.prompt(
-            textwrap.dedent('''
-                Welcome to The SCORE Framework!
-                Where would you like to keep your projects?
-                [default: %s]
-            ''' % default).strip(),
-            prompt_suffix=' ',
-            default=default,
-            show_default=False,
-            type=click.Path(file_okay=True, dir_okay=False))
-        open(score.cli.conf.globalconf(), 'a').write(textwrap.dedent('''
-            [projects]
-            root = %s
-        ''' % os.path.expanduser(target)).rstrip())
-        conf['projects'] = {'root': target}
     if 'score.init' not in conf:
         conf['score.init'] = {}
     conf['score.init']['modules'] = 'score.projects'
@@ -63,10 +42,15 @@ def main(clickctx):
 
 
 @main.command()
-@click.argument('name')
+@click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
-def create(clickctx, name):
-    clickctx.obj['projects'].create(name).spawn_shell()
+def create(clickctx, folder):
+    click.confirm(textwrap.dedent('''
+        Will create the project folder in the following directory:
+        %s
+        Is that OK?
+    ''' % folder).strip(), abort=True)
+    clickctx.obj['projects'].create(folder).spawn_shell()
 
 
 @main.command()

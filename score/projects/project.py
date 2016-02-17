@@ -26,12 +26,7 @@
 
 import re
 import os
-from score.cli.conf import confroot
 from vex.main import _main as vex_main
-
-
-def vex(*args):
-    vex_main(os.environ, args)
 
 
 def copytpl(src, dst, vars):
@@ -55,45 +50,55 @@ def copytpl(src, dst, vars):
 
 class Project:
 
-    def __init__(self, conf, name):
-        assert re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', name), 'Invalid name'
-        self.name = name
-        self.conf = conf
-        self.root = os.path.join(conf.root, name)
-        self.venvdir = os.path.join(confroot(global_=True), 'projects', name)
-
-    def create(self, template='web'):
-        # copy scaffold
-        assert not self.exists, 'Project already exists'
+    @staticmethod
+    def create(conf, id, folder, venvdir, template='web'):
+        project = Project(conf, id, folder, venvdir)
+        assert not project.exists, 'Project already exists'
         scaffold = os.path.join(os.path.dirname(__file__),
                                 'scaffold', template, 'files')
-        copytpl(scaffold, self.root, {
-            '{venv}': self.venvdir,
-            '{root}': self.root,
-            '{name}': self.name,
-            '{ucname}': self.name.capitalize(),
+        copytpl(scaffold, project.folder, {
+            '{venv}': project.venvdir,
+            '{name}': project.name,
+            '{folder}': project.folder,
+            '{ucname}': project.name.capitalize(),
         })
-        # create virtualenv
-        vex('--path', self.venvdir, '--make', 'true')
-        # install the project
-        vex('--path', self.venvdir, 'pip', 'install', '--editable', self.root)
-        # register configurations
-        prodconf = os.path.join(self.root, 'production.conf')
-        devconf = os.path.join(self.root, 'development.conf')
-        localconf = os.path.join(self.root, 'local.conf')
-        vex('--path', self.venvdir, 'score', 'conf', 'add', prodconf)
-        vex('--path', self.venvdir, 'score', 'conf', 'add', devconf)
-        vex('--path', self.venvdir, 'score', 'conf', 'add', '-d', localconf)
+        project.recreate_venv()
+        project.install()
+        project.register_configurations()
+        return project
 
-    def create_venv(self):
-        import vex.options
-        import vex.make
-        options = vex.options.get_options(['--path', self.venvdir])
-        vex.make.handle_make(os.environ, options, self.venvdir)
+    def __init__(self, conf, id, folder, venvdir):
+        self.id = id
+        self.conf = conf
+        self.folder = folder
+        self.venvdir = venvdir
+
+    def recreate_venv(self):
+        self.vex('--make', 'true')
+
+    def install(self):
+        self.vex('pip', 'install', '--editable', self.folder)
+
+    def register_configurations(self):
+        prodconf = os.path.join(self.folder, 'production.conf')
+        devconf = os.path.join(self.folder, 'development.conf')
+        localconf = os.path.join(self.folder, 'local.conf')
+        self.vex('score', 'conf', 'add', prodconf)
+        self.vex('score', 'conf', 'add', devconf)
+        self.vex('score', 'conf', 'add', '-d', localconf)
 
     def spawn_shell(self):
-        vex('--path', self.venvdir, '--cwd', self.root)
+        self.vex('--path', self.venvdir, '--cwd', self.folder)
+
+    def vex(self, *args):
+        environ = os.environ.copy()
+        environ['VIRTUAL_ENV_NAME'] = self.name
+        vex_main(environ, ('--path', self.venvdir) + args)
+
+    @property
+    def name(self):
+        return os.path.basename(self.folder)
 
     @property
     def exists(self):
-        return os.path.exists(self.root)
+        return os.path.exists(self.folder)
