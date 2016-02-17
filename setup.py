@@ -26,11 +26,90 @@
 
 import os
 from setuptools import setup
+from setuptools.command.install import install
+from setuptools.command.develop import develop
+import textwrap
+import sys
 
 
 here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.rst')) as f:
     README = f.read()
+
+
+class ShellUpdateMixin:
+
+    def run(self):
+        result = super().run()
+        is_virtualenv = (
+            hasattr(sys, 'real_prefix') or (
+                hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix))
+        if not is_virtualenv:
+            # we are outside a virtual environment
+            # FIXME: we should be checking, if this is a --user installation,
+            # but we have not found a reliable, cross-platform way of doing that
+            # TODO: maybe we should create a bashrc, if there is none?
+            self._update_bashrc() or self._update_bash_profile()
+            self._update_zshrc()
+        return result
+
+    def _update_bashrc(self):
+        return self._update_rc_file(os.path.expanduser('~/.bashrc'),
+                                    self._create_bash_prompt())
+
+    def _update_bash_profile(self):
+        return self._update_rc_file(os.path.expanduser('~/.bash_profile'),
+                                    self._create_bash_prompt())
+
+    def _create_bash_prompt(self):
+        return textwrap.dedent(r'''
+            if [ -n "$VIRTUAL_ENV_NAME" ]; then
+              export PS1="\[[0;33m\](${VIRTUAL_ENV_NAME})\[[0m\] $PS1"
+            elif [ -n "$VIRTUAL_ENV" ]; then
+              export PS1="\[[0;33m\](${VIRTUAL_ENV##*/})\[[0m\] $PS1"
+            fi
+        ''').strip()
+
+    def _update_zshrc(self):
+        prompt = textwrap.dedent(r'''
+            if [ -n "$VIRTUAL_ENV_NAME" ]; then
+              export PROMPT="%{[0;33m%}(${VIRTUAL_ENV_NAME})%{[0m%} $PROMPT"
+            elif [ -n "$VIRTUAL_ENV" ]; then
+              export PROMPT="%{[0;33m%}(${VIRTUAL_ENV##*/})%{[0m%} $PROMPT"
+            fi
+        ''').strip()
+        return self._update_rc_file(os.path.expanduser('~/.zshrc'), prompt)
+
+    def _update_rc_file(self, rcfile, prompt):
+        try:
+            content = open(rcfile).read()
+        except FileNotFoundError:
+            return False
+        # skip the update if there is something similar
+        if 'VIRTUAL_ENV_NAME' in content:
+            return True
+        code = '\n'
+        if content[-1] != '\n':
+            code += '\n'
+        code += textwrap.dedent(r'''
+            # The next block was inserted by the `projects' module of
+            # The SCORE Framework (http://score-framework.org)
+
+              # This next line updates your shell prompt to include the name of
+              # the current project.
+        ''').lstrip()
+        code += textwrap.indent(prompt, '  ') + '\n'
+        open(rcfile, 'a').write(code)
+        return True
+
+
+class InstallCommand(ShellUpdateMixin, install):
+    pass
+
+
+class DevelopCommand(ShellUpdateMixin, develop):
+    pass
+
 
 setup(
     name='score.projects',
@@ -68,4 +147,8 @@ setup(
             'projects = score.projects.cli:main',
         ]
     },
+    cmdclass={
+        'install': InstallCommand,
+        'develop': DevelopCommand,
+    }
 )
