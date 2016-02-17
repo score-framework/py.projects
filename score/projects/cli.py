@@ -25,6 +25,7 @@
 # Licensee has his registered seat, an establishment or assets.
 
 import click
+import os
 import score.cli.conf
 from score.init import parse_config_file, init as score_init
 import textwrap
@@ -45,6 +46,10 @@ def main(clickctx):
 @click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
 def create(clickctx, folder):
+    if '/' not in folder:
+        folder = os.path.join(os.getcwd(), folder)
+    if os.path.exists(folder):
+        raise click.ClickException('Folder already exists')
     click.confirm(textwrap.dedent('''
         Will create the project folder in the following directory:
         %s
@@ -57,7 +62,7 @@ def create(clickctx, folder):
 @click.pass_context
 def list(clickctx):
     for project in clickctx.obj['projects']:
-        print(project.name)
+        print(project.folder)
 
 
 @main.command()

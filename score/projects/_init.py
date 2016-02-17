@@ -61,6 +61,7 @@ class ConfiguredProjectModule(ConfiguredModule):
         id = self._new_id(existing)
         venvdir = os.path.join(confroot(global_=True), 'projects',
                                'venv', str(id))
+        os.makedirs(os.path.dirname(venvdir), exist_ok=True)
         project = Project.create(self, id, folder, venvdir, template=template)
         settings = self._read_conf()
         settings[str(id)] = {'folder': folder}
