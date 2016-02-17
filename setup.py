@@ -113,7 +113,7 @@ class DevelopCommand(ShellUpdateMixin, develop):
 
 setup(
     name='score.projects',
-    version='0.0.5',
+    version='0.0.6',
     description='Manage your projects with The SCORE Framework',
     long_description=README,
     author='strg.at',
