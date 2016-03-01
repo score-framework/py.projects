@@ -29,6 +29,7 @@ from .project import Project
 import os
 from score.cli.conf import confroot, listconf, addconf, get_origin
 import configparser
+import shutil
 
 
 defaults = {
@@ -55,8 +56,9 @@ class ConfiguredProjectModule(ConfiguredModule):
         except StopIteration:
             raise ValueError('No project called "%s"' % name)
 
-    def _relocated(self, name, folder):
+    def relocate(self, name, folder):
         project = self.get(name)
+        shutil.move(project.folder, folder)
         configurations = listconf(include_global=False, venv=project.venvdir)
         for name, path in configurations.items():
             path = get_origin(path)
