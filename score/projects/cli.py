@@ -50,10 +50,9 @@ def main(clickctx):
 @click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
 def create(clickctx, folder):
-    if os.sep not in folder:
-        folder = os.path.join(os.getcwd(), folder)
     if os.path.exists(folder):
         raise click.ClickException('Folder already exists')
+    folder = os.path.abspath(folder)
     click.confirm(textwrap.dedent('''
         Will create the project folder in the following directory:
         %s
