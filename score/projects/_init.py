@@ -72,6 +72,21 @@ class ConfiguredProjectModule(ConfiguredModule):
         self._write_conf(settings)
         return project
 
+    def delete(self, name):
+        project = self.get(name)
+        try:
+            os.rmdir(project.folder)
+        except FileNotFoundError:
+            pass
+        try:
+            os.rmdir(project.venvdir)
+        except FileNotFoundError:
+            pass
+        settings = self._read_conf()
+        del settings[str(project.id)]
+        self._write_conf(settings)
+        return project
+
     def register(self, folder):
         existing = self.all()
         name = os.path.basename(folder)

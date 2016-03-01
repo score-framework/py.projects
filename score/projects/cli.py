@@ -35,6 +35,9 @@ import textwrap
 @click.group()
 @click.pass_context
 def main(clickctx):
+    """
+    Create or load your projects
+    """
     conf = parse_config_file(score.cli.conf.globalconf())
     if 'score.init' not in conf:
         conf['score.init'] = {}
@@ -68,12 +71,26 @@ def register(clickctx, folder):
 
 @main.command()
 @click.argument('project')
+@click.pass_context
+def delete(clickctx, project):
+    projects = clickctx.obj['projects']
+    project = projects[project]
+    click.confirm(textwrap.dedent('''
+        Will delete the project %s at this location:
+        %s
+    ''' % (project.name, project.folder)).strip(), abort=True)
+    projects.delete(project)
+
+
+@main.command()
+@click.argument('project')
 @click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
 def move(clickctx, project, folder):
     project = clickctx.obj['projects'][project]
     if os.sep not in folder:
         folder = os.path.join(os.getcwd(), folder)
+    folder = os.path.abspath(folder)
     click.confirm(textwrap.dedent('''
         Will relocate the project %s to the following path:
         %s
