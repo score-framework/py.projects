@@ -34,4 +34,10 @@ setup(
         'score.serve',
         'jinja2',
     ],
+    entry_points={
+        'score.cli': [
+            'db = {name}.cli.db:main',
+            'shell = {name}.cli.shell:main',
+        ],
+    },
 )
