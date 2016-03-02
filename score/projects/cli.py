@@ -28,7 +28,6 @@ import click
 import os
 import score.cli.conf
 from score.init import parse_config_file, init as score_init
-import shutil
 import textwrap
 
 
@@ -38,7 +37,7 @@ def main(clickctx):
     """
     Create or load your projects
     """
-    conf = parse_config_file(score.cli.conf.globalconf())
+    conf = parse_config_file(score.cli.conf.global_file())
     if 'score.init' not in conf:
         conf['score.init'] = {}
     conf['score.init']['modules'] = 'score.projects'

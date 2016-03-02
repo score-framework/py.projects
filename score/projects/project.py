@@ -26,7 +26,7 @@
 
 import os
 from vex.main import _main as vex_main
-from score.cli.conf import setdefault, addconf
+from score.cli.conf import make_default, add as addconf
 
 
 def copytpl(src, dst, vars):
@@ -74,7 +74,7 @@ class Project:
         for name in ('production', 'development', 'local'):
             addconf(name, os.path.join(project.folder, '%s.conf' % name),
                     venv=project.venvdir)
-        setdefault('local', venv=project.venvdir)
+        make_default('local', venv=project.venvdir)
         return project
 
     def __init__(self, conf, id, folder, venvdir):
