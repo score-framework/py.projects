@@ -27,7 +27,7 @@
 from score.init import ConfiguredModule
 from .project import Project
 import os
-from score.cli.conf import confroot, listconf, addconf, get_origin
+from score.cli.conf import rootdir, name2file, add as addconf, get_origin
 import configparser
 import shutil
 
@@ -59,7 +59,7 @@ class ConfiguredProjectModule(ConfiguredModule):
     def relocate(self, name, folder):
         project = self.get(name)
         shutil.move(project.folder, folder)
-        configurations = listconf(include_global=False, venv=project.venvdir)
+        configurations = name2file(include_global=False, venv=project.venvdir)
         for name, path in configurations.items():
             path = get_origin(path)
             if not path.startswith(project.folder):
@@ -95,7 +95,7 @@ class ConfiguredProjectModule(ConfiguredModule):
         if name in existing:
             raise ValueError('Project "%s" already exists' % name)
         id = self._new_id(existing)
-        venvdir = os.path.join(confroot(global_=True), 'projects',
+        venvdir = os.path.join(rootdir(global_=True), 'projects',
                                'venv', str(id))
         project = Project.register(self, id, folder, venvdir)
         settings = self._read_conf()
@@ -109,7 +109,7 @@ class ConfiguredProjectModule(ConfiguredModule):
         if name in existing:
             raise ValueError('Project "%s" already exists' % name)
         id = self._new_id(existing)
-        venvdir = os.path.join(confroot(global_=True), 'projects',
+        venvdir = os.path.join(rootdir(global_=True), 'projects',
                                'venv', str(id))
         os.makedirs(os.path.dirname(venvdir), exist_ok=True)
         project = Project.create(self, id, folder, venvdir, template=template)
@@ -127,7 +127,7 @@ class ConfiguredProjectModule(ConfiguredModule):
             if section == 'DEFAULT':
                 continue
             folder = settings[section]['folder']
-            venvdir = os.path.join(confroot(global_=True), 'projects',
+            venvdir = os.path.join(rootdir(global_=True), 'projects',
                                    'venv', section)
             yield(Project(self, int(section), folder, venvdir))
 
@@ -142,12 +142,12 @@ class ConfiguredProjectModule(ConfiguredModule):
         return id
 
     def _read_conf(self):
-        root = os.path.join(confroot(global_=True), 'projects')
+        root = os.path.join(rootdir(global_=True), 'projects')
         settings = configparser.ConfigParser()
         settings.read(os.path.join(root, 'list.conf'))
         return settings
 
     def _write_conf(self, settings):
-        root = os.path.join(confroot(global_=True), 'projects')
+        root = os.path.join(rootdir(global_=True), 'projects')
         file = os.path.join(root, 'list.conf')
         settings.write(open(file, 'w'))
