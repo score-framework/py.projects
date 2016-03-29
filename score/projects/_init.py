@@ -77,11 +77,11 @@ class ConfiguredProjectModule(ConfiguredModule):
     def delete(self, name):
         project = self.get(name)
         try:
-            os.rmdir(project.folder)
+            shutil.rmtree(project.folder)
         except FileNotFoundError:
             pass
         try:
-            os.rmdir(project.venvdir)
+            shutil.rmtree(project.venvdir)
         except FileNotFoundError:
             pass
         settings = self._read_conf()
