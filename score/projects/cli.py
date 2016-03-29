@@ -31,6 +31,7 @@ from score.init import parse_config_file, init as score_init
 import textwrap
 import tempfile
 from ._tpl import prepare, srcvalid, copy as copytpl
+from ._init import ProjectNotFound
 
 
 @click.group()
@@ -48,17 +49,19 @@ def main(clickctx):
 
 
 @main.command()
+@click.option('-n', '--name')
 @click.option('-t', '--template', default='web')
 @click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
-def create(clickctx, template, folder):
+def create(clickctx, template, folder, name=None):
     if not srcvalid(template):
         raise click.ClickException('Could not find template "%s"' % template)
     if os.path.exists(folder):
         raise click.ClickException('Folder already exists')
-    name = os.path.basename(folder)
+    if not name:
+        name = os.path.basename(folder)
     if name in clickctx.obj['projects']:
-        raise click.ClickException('Project called %s already exists' % name)
+        raise click.ClickException('Project %s already exists' % name)
     folder = os.path.abspath(folder)
     click.confirm(textwrap.dedent('''
         Will create the project folder in the following directory:
@@ -72,27 +75,29 @@ def create(clickctx, template, folder):
             '{folder}': folder,
             '{ucname}': name.capitalize(),
         })
-    clickctx.obj['projects'].register(folder).spawn_shell()
+    clickctx.obj['projects'].register(name, folder).spawn_shell()
 
 
 @main.command()
+@click.option('-n', '--name')
 @click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
-def register(clickctx, folder):
-    clickctx.obj['projects'].register(folder)
+def register(clickctx, folder, name=None):
+    if not name:
+        name = os.path.basename(folder)
+    clickctx.obj['projects'].register(name, folder)
 
 
 @main.command()
 @click.argument('project')
 @click.pass_context
 def delete(clickctx, project):
-    projects = clickctx.obj['projects']
-    project = projects[project]
+    project = _get_project(clickctx, project)
     click.confirm(textwrap.dedent('''
         Will delete the project %s at this location:
         %s
     ''' % (project.name, project.folder)).strip(), abort=True)
-    projects.delete(project)
+    clickctx.obj['projects'].delete(project)
 
 
 @main.command()
@@ -100,8 +105,7 @@ def delete(clickctx, project):
 @click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
 def move(clickctx, project, folder):
-    projects = clickctx.obj['projects']
-    project = projects[project]
+    project = _get_project(clickctx, project)
     if os.sep not in folder:
         folder = os.path.join(os.getcwd(), folder)
     folder = os.path.abspath(folder)
@@ -109,21 +113,37 @@ def move(clickctx, project, folder):
         Will relocate the project %s to the following path:
         %s
     ''' % (project.name, folder)).strip(), abort=True)
-    projects.relocate(project, folder)
+    clickctx.obj['projects'].relocate(project, folder)
+
+
+@main.command()
+@click.argument('project')
+@click.argument('newname')
+@click.pass_context
+def rename(clickctx, project, newname):
+    project = _get_project(clickctx, project)
+    clickctx.obj['projects'].rename(project, newname)
 
 
 @main.command()
 @click.pass_context
 def list(clickctx):
     for project in clickctx.obj['projects']:
-        print(project.folder)
+        print('%s: %s' % (project.name, project.folder))
 
 
 @main.command()
-@click.argument('name')
+@click.argument('project')
 @click.pass_context
-def load(clickctx, name):
-    clickctx.obj['projects'][name].spawn_shell()
+def load(clickctx, project):
+    _get_project(clickctx, project).spawn_shell()
+
+
+def _get_project(clickctx, name):
+    try:
+        return clickctx.obj['projects'][name]
+    except ProjectNotFound:
+        raise click.ClickException('No project called "%s"' % name)
 
 
 if __name__ == '__main__':

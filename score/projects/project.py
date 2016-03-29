@@ -32,8 +32,8 @@ from score.cli.conf import rootdir, make_default, add as addconf
 class Project:
 
     @staticmethod
-    def register(conf, folder):
-        project = Project(conf, folder)
+    def register(conf, name, folder):
+        project = Project(conf, name, folder)
         project.recreate_venv()
         for name in ('production', 'development', 'local'):
             addconf(name, os.path.join(project.folder, '%s.conf' % name),
@@ -41,8 +41,9 @@ class Project:
         make_default('local', venv=project.venvdir)
         return project
 
-    def __init__(self, conf, folder):
+    def __init__(self, conf, name, folder):
         self.conf = conf
+        self.name = name
         self.folder = folder
 
     def recreate_venv(self):
@@ -60,10 +61,6 @@ class Project:
         environ = os.environ.copy()
         environ['VIRTUAL_ENV_NAME'] = self.name
         vex_main(environ, ('--path', self.venvdir) + args)
-
-    @property
-    def name(self):
-        return os.path.basename(self.folder)
 
     @property
     def venvdir(self):

@@ -54,12 +54,10 @@ class ConfiguredProjectModule(ConfiguredModule):
         try:
             return next(p for p in self if p.name == name)
         except StopIteration:
-            raise ValueError('No project called "%s"' % name)
+            raise ProjectNotFound(name)
 
     def relocate(self, name, folder):
         project = self.get(name)
-        oldname = project.name
-        oldvenv = project.venvdir
         shutil.move(project.folder, folder)
         configurations = name2file(include_global=False, venv=project.venvdir)
         for name, path in configurations.items():
@@ -70,19 +68,25 @@ class ConfiguredProjectModule(ConfiguredModule):
             newpath = os.path.join(folder, relpath)
             addconf(name, newpath, venv=project.venvdir)
         project.folder = folder
-        if project.name == oldname:
-            project.install()
-        else:
-            try:
-                shutil.rmtree(oldvenv)
-            except FileNotFoundError:
-                pass
-            project.recreate_venv()
+        project.install()
         settings = self._read_conf()
-        del settings[oldname]
         settings[project.name] = {'folder': folder}
         self._write_conf(settings)
         return project
+
+    def rename(self, oldname, newname):
+        project = self.get(oldname)
+        oldname = project.name
+        try:
+            shutil.rmtree(project.venvdir)
+        except FileNotFoundError:
+            pass
+        project.name = newname
+        project.recreate_venv()
+        settings = self._read_conf()
+        del settings[oldname]
+        settings[newname] = {'folder': project.folder}
+        self._write_conf(settings)
 
     def delete(self, name):
         project = self.get(name)
@@ -95,16 +99,14 @@ class ConfiguredProjectModule(ConfiguredModule):
         except FileNotFoundError:
             pass
         settings = self._read_conf()
-        del settings[name]
+        del settings[project.name]
         self._write_conf(settings)
         return project
 
-    def register(self, folder):
-        existing = self.all()
-        name = os.path.basename(folder)
-        if name in existing:
+    def register(self, name, folder):
+        if name in self.all():
             raise ValueError('Project "%s" already exists' % name)
-        project = Project.register(self, folder)
+        project = Project.register(self, name, folder)
         settings = self._read_conf()
         settings[name] = {'folder': folder}
         self._write_conf(settings)
@@ -119,7 +121,7 @@ class ConfiguredProjectModule(ConfiguredModule):
             if section == 'DEFAULT':
                 continue
             folder = settings[section]['folder']
-            yield(Project(self, folder))
+            yield(Project(self, section, folder))
 
     __getitem__ = get
 
@@ -133,3 +135,7 @@ class ConfiguredProjectModule(ConfiguredModule):
         root = os.path.join(rootdir(global_=True), 'projects')
         file = os.path.join(root, 'list.conf')
         settings.write(open(file, 'w'))
+
+
+class ProjectNotFound(Exception):
+    pass
