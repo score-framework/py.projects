@@ -57,6 +57,6 @@ def _update_rc_file(rcfile, prompt):
             # This next line updates your shell prompt to include the name of
             # the current project.
     ''').lstrip()
-    code += textwrap.indent(prompt, '  ') + '\n'
+    code += textwrap.indent(prompt, '    ') + '\n'
     open(rcfile, 'a').write(code)
     return True
