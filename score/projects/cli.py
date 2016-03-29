@@ -29,6 +29,8 @@ import os
 import score.cli.conf
 from score.init import parse_config_file, init as score_init
 import textwrap
+import tempfile
+from ._tpl import prepare, srcvalid
 
 
 @click.group()
@@ -46,9 +48,12 @@ def main(clickctx):
 
 
 @main.command()
+@click.option('-t', '--template', default='web')
 @click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
-def create(clickctx, folder):
+def create(clickctx, template, folder):
+    if not srcvalid(template):
+        raise click.ClickException('Could not find template "%s"' % template)
     if os.path.exists(folder):
         raise click.ClickException('Folder already exists')
     folder = os.path.abspath(folder)
@@ -57,7 +62,10 @@ def create(clickctx, folder):
         %s
         Is that OK?
     ''' % folder).strip(), abort=True)
-    clickctx.obj['projects'].create(folder).spawn_shell()
+    with tempfile.TemporaryDirectory() as tmp:
+        prepare(template, tmp)
+        project = clickctx.obj['projects'].create(folder, template=tmp)
+    project.spawn_shell()
 
 
 @main.command()

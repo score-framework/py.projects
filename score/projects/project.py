@@ -27,25 +27,7 @@
 import os
 from vex.main import _main as vex_main
 from score.cli.conf import make_default, add as addconf
-
-
-def copytpl(src, dst, vars):
-    if os.path.isdir(src):
-        os.makedirs(dst)
-        for filetpl in os.listdir(src):
-            file = filetpl
-            for k, v in vars.items():
-                file = file.replace(k, v)
-            copytpl(os.path.join(src, filetpl), os.path.join(dst, file), vars)
-    else:
-        try:
-            content = open(src).read()
-            for k, v in vars.items():
-                content = content.replace(k, v)
-            open(dst, 'w').write(content)
-        except UnicodeDecodeError:
-            # not a text file, just copy content
-            open(dst, 'wb').write(open(src, 'rb').read())
+from ._tpl import copy as copytpl
 
 
 class Project:
@@ -58,12 +40,10 @@ class Project:
         return project
 
     @staticmethod
-    def create(conf, id, folder, venvdir, template='web'):
+    def create(conf, id, folder, venvdir, template):
         project = Project(conf, id, folder, venvdir)
         assert not project.exists, 'Project already exists'
-        scaffold = os.path.join(os.path.dirname(__file__),
-                                'scaffold', template, 'files')
-        copytpl(scaffold, project.folder, {
+        copytpl(template, project.folder, {
             '{venv}': project.venvdir,
             '{name}': project.name,
             '{folder}': project.folder,
@@ -87,6 +67,7 @@ class Project:
         self.vex('--make', 'true')
 
     def install(self):
+        self.vex('pip', 'install', '--upgrade', 'pip')
         self.vex('pip', 'install', '--editable', self.folder)
 
     def spawn_shell(self):
