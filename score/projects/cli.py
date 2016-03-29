@@ -30,7 +30,7 @@ import score.cli.conf
 from score.init import parse_config_file, init as score_init
 import textwrap
 import tempfile
-from ._tpl import prepare, srcvalid
+from ._tpl import prepare, srcvalid, copy as copytpl
 
 
 @click.group()
@@ -56,6 +56,9 @@ def create(clickctx, template, folder):
         raise click.ClickException('Could not find template "%s"' % template)
     if os.path.exists(folder):
         raise click.ClickException('Folder already exists')
+    name = os.path.basename(folder)
+    if name in clickctx.obj['projects']:
+        raise click.ClickException('Project called %s already exists' % name)
     folder = os.path.abspath(folder)
     click.confirm(textwrap.dedent('''
         Will create the project folder in the following directory:
@@ -64,8 +67,12 @@ def create(clickctx, template, folder):
     ''' % folder).strip(), abort=True)
     with tempfile.TemporaryDirectory() as tmp:
         prepare(template, tmp)
-        project = clickctx.obj['projects'].create(folder, template=tmp)
-    project.spawn_shell()
+        copytpl(tmp, folder, {
+            '{name}': name,
+            '{folder}': folder,
+            '{ucname}': name.capitalize(),
+        })
+    clickctx.obj['projects'].register(folder).spawn_shell()
 
 
 @main.command()

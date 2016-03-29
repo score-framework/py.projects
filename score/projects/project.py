@@ -26,45 +26,28 @@
 
 import os
 from vex.main import _main as vex_main
-from score.cli.conf import make_default, add as addconf
-from ._tpl import copy as copytpl
+from score.cli.conf import rootdir, make_default, add as addconf
 
 
 class Project:
 
     @staticmethod
-    def register(conf, id, folder, venvdir, template='web'):
-        project = Project(conf, id, folder, venvdir)
+    def register(conf, folder):
+        project = Project(conf, folder)
         project.recreate_venv()
-        project.install()
-        return project
-
-    @staticmethod
-    def create(conf, id, folder, venvdir, template):
-        project = Project(conf, id, folder, venvdir)
-        assert not project.exists, 'Project already exists'
-        copytpl(template, project.folder, {
-            '{venv}': project.venvdir,
-            '{name}': project.name,
-            '{folder}': project.folder,
-            '{ucname}': project.name.capitalize(),
-        })
-        project.recreate_venv()
-        project.install()
         for name in ('production', 'development', 'local'):
             addconf(name, os.path.join(project.folder, '%s.conf' % name),
                     venv=project.venvdir)
         make_default('local', venv=project.venvdir)
         return project
 
-    def __init__(self, conf, id, folder, venvdir):
-        self.id = id
+    def __init__(self, conf, folder):
         self.conf = conf
         self.folder = folder
-        self.venvdir = venvdir
 
     def recreate_venv(self):
         self.vex('--make', 'true')
+        self.install()
 
     def install(self):
         self.vex('pip', 'install', '--upgrade', 'pip')
@@ -78,12 +61,13 @@ class Project:
         environ['VIRTUAL_ENV_NAME'] = self.name
         vex_main(environ, ('--path', self.venvdir) + args)
 
-    def _relocated(self, folder):
-        self.conf._relocated(self, folder)
-
     @property
     def name(self):
         return os.path.basename(self.folder)
+
+    @property
+    def venvdir(self):
+        return os.path.join(rootdir(global_=True), 'projects', self.name)
 
     @property
     def exists(self):

@@ -58,6 +58,8 @@ class ConfiguredProjectModule(ConfiguredModule):
 
     def relocate(self, name, folder):
         project = self.get(name)
+        oldname = project.name
+        oldvenv = project.venvdir
         shutil.move(project.folder, folder)
         configurations = name2file(include_global=False, venv=project.venvdir)
         for name, path in configurations.items():
@@ -68,9 +70,17 @@ class ConfiguredProjectModule(ConfiguredModule):
             newpath = os.path.join(folder, relpath)
             addconf(name, newpath, venv=project.venvdir)
         project.folder = folder
-        project.install()
+        if project.name == oldname:
+            project.install()
+        else:
+            try:
+                shutil.rmtree(oldvenv)
+            except FileNotFoundError:
+                pass
+            project.recreate_venv()
         settings = self._read_conf()
-        settings[str(project.id)] = {'folder': folder}
+        del settings[oldname]
+        settings[project.name] = {'folder': folder}
         self._write_conf(settings)
         return project
 
@@ -85,7 +95,7 @@ class ConfiguredProjectModule(ConfiguredModule):
         except FileNotFoundError:
             pass
         settings = self._read_conf()
-        del settings[str(project.id)]
+        del settings[name]
         self._write_conf(settings)
         return project
 
@@ -94,27 +104,9 @@ class ConfiguredProjectModule(ConfiguredModule):
         name = os.path.basename(folder)
         if name in existing:
             raise ValueError('Project "%s" already exists' % name)
-        id = self._new_id(existing)
-        venvdir = os.path.join(rootdir(global_=True), 'projects',
-                               'venv', str(id))
-        project = Project.register(self, id, folder, venvdir)
+        project = Project.register(self, folder)
         settings = self._read_conf()
-        settings[str(id)] = {'folder': folder}
-        self._write_conf(settings)
-        return project
-
-    def create(self, folder, *, template='web'):
-        existing = self.all()
-        name = os.path.basename(folder)
-        if name in existing:
-            raise ValueError('Project "%s" already exists' % name)
-        id = self._new_id(existing)
-        venvdir = os.path.join(rootdir(global_=True), 'projects',
-                               'venv', str(id))
-        os.makedirs(os.path.dirname(venvdir), exist_ok=True)
-        project = Project.create(self, id, folder, venvdir, template=template)
-        settings = self._read_conf()
-        settings[str(id)] = {'folder': folder}
+        settings[name] = {'folder': folder}
         self._write_conf(settings)
         return project
 
@@ -127,19 +119,9 @@ class ConfiguredProjectModule(ConfiguredModule):
             if section == 'DEFAULT':
                 continue
             folder = settings[section]['folder']
-            venvdir = os.path.join(rootdir(global_=True), 'projects',
-                                   'venv', section)
-            yield(Project(self, int(section), folder, venvdir))
+            yield(Project(self, folder))
 
     __getitem__ = get
-
-    def _new_id(self, all_projects=None):
-        if all_projects is None:
-            all_projects = self.all()
-        id = 1
-        if all_projects:
-            id = 1 + max(project.id for project in all_projects.values())
-        return id
 
     def _read_conf(self):
         root = os.path.join(rootdir(global_=True), 'projects')
