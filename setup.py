@@ -60,7 +60,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Application Frameworks',
     ],
     install_requires=[
-        'score.cli',
+        'score.cli >= 0.2.11',
         'score.init',
         'vex',
     ],
@@ -68,7 +68,7 @@ setup(
         'score.cli': [
             'projects = score.projects.cli:main',
         ],
-        'score.cli.setup': [
+        'score.cli._setup': [
             'update_prompt = score.projects._setup:update_prompt',
         ],
     },
