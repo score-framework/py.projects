@@ -68,7 +68,7 @@ setup(
         'score.cli': [
             'projects = score.projects.cli:main',
         ],
-        'score.cli._setup': [
+        'score.cli.setup': [
             'update_prompt = score.projects._setup:update_prompt',
         ],
     },
