@@ -25,6 +25,7 @@
 # Licensee has his registered seat, an establishment or assets.
 
 import click
+import re
 import os
 import score.cli.conf
 from score.init import parse_config_file, init as score_init
@@ -50,10 +51,11 @@ def main(clickctx):
 
 @main.command()
 @click.option('-n', '--name')
-@click.option('-t', '--template', default='web')
+@click.option('-p', '--package')
+@click.option('-t', '--template', default='minimal')
 @click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
-def create(clickctx, template, folder, name=None):
+def create(clickctx, template, folder, name=None, package=None):
     if not srcvalid(template):
         raise click.ClickException('Could not find template "%s"' % template)
     if os.path.exists(folder):
@@ -62,6 +64,12 @@ def create(clickctx, template, folder, name=None):
         name = os.path.basename(folder)
     if name in clickctx.obj['projects']:
         raise click.ClickException('Project %s already exists' % name)
+    if not package:
+        package = name
+    if not re.match('^[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*$', package):
+        raise click.ClickException('Invalid package name')
+    package_camelcase = ''.join(map(lambda x: x[0].upper() + x[1:],
+                                    package.split('.')))
     folder = os.path.abspath(folder)
     click.confirm(textwrap.dedent('''
         Will create the project folder in the following directory:
@@ -71,9 +79,9 @@ def create(clickctx, template, folder, name=None):
     with tempfile.TemporaryDirectory() as tmp:
         prepare(template, tmp)
         copytpl(tmp, folder, {
-            '{name}': name,
-            '{folder}': folder,
-            '{ucname}': name.capitalize(),
+            '__PROJECT_NAME__': name,
+            '__PACKAGE_NAME__': package,
+            '__PACKAGE_NAME_CAMELCASE__': package_camelcase,
         })
     clickctx.obj['projects'].register(name, folder).spawn_shell()
 

@@ -2,16 +2,38 @@ import os
 from distutils.dir_util import copy_tree
 import subprocess
 import sys
+import textwrap
+
+
+def _copy_package(src, dst, package):
+    parts = package.split('.')
+    for i in range(1, len(parts)):
+        folder = os.path.join(dst, *parts[:i])
+        os.makedirs(folder)
+        open(os.path.join(folder, '__init__.py'), 'w').write(textwrap.dedent('''
+            # this is a namespace package
+            try:
+                import pkg_resources
+                pkg_resources.declare_namespace(__name__)
+            except ImportError:
+                import pkgutil
+                __path__ = pkgutil.extend_path(__path__, __name__)
+        ''').strip())
+    return os.path.join(*parts)
 
 
 def copy(src, dst, vars):
     if os.path.isdir(src):
         os.makedirs(dst)
-        for filetpl in os.listdir(src):
-            file = filetpl
-            for k, v in vars.items():
-                file = file.replace(k, v)
-            copy(os.path.join(src, filetpl), os.path.join(dst, file), vars)
+        for srcfile in os.listdir(src):
+            if srcfile == '__PACKAGE_NAME__' and \
+                    os.path.isdir(os.path.join(src, srcfile)):
+                dstfile = _copy_package(src, dst, vars['__PACKAGE_NAME__'])
+            else:
+                dstfile = srcfile
+                for k, v in vars.items():
+                    dstfile = dstfile.replace(k, v)
+            copy(os.path.join(src, srcfile), os.path.join(dst, dstfile), vars)
     else:
         try:
             content = open(src).read()
@@ -29,7 +51,7 @@ def srcvalid(src):
             src.startswith('hg+') or
             os.path.isdir(src) or
             os.path.isdir(os.path.join(
-                os.path.dirname(__file__), 'scaffold', src, 'files')))
+                os.path.dirname(__file__), 'scaffolds', src)))
 
 
 def prepare(src, dst):
@@ -42,8 +64,8 @@ def prepare(src, dst):
     elif os.path.isdir(src):
         copy_tree(src, dst)
     elif os.path.isdir(os.path.join(os.path.dirname(__file__),
-                                    'scaffold', src, 'files')):
-        src = os.path.join(os.path.dirname(__file__), 'scaffold', src, 'files')
+                                    'scaffolds', src)):
+        src = os.path.join(os.path.dirname(__file__), 'scaffolds', src)
         copy_tree(src, dst)
     else:
         raise ValueError('Could not determine how to prepare from %s' % src)
