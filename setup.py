@@ -35,7 +35,7 @@ with open(os.path.join(here, 'README.rst')) as f:
 
 setup(
     name='score.projects',
-    version='0.0.8',
+    version='0.1',
     description='Manage your projects with The SCORE Framework',
     long_description=README,
     author='strg.at',
@@ -48,7 +48,7 @@ setup(
     zip_safe=False,
     license='LGPL',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU Lesser General '
