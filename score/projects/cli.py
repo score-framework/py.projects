@@ -93,6 +93,7 @@ def create(clickctx, template, folder, name=None, package=None):
 def register(clickctx, folder, name=None):
     if not name:
         name = os.path.basename(folder)
+    folder = os.path.abspath(folder)
     clickctx.obj['projects'].register(name, folder)
 
 
