@@ -26,7 +26,7 @@
 
 import os
 from vex.main import _main as vex_main
-from score.cli.conf import rootdir, make_default, add as addconf
+from score.cli.conf import rootdir, add as addconf
 
 
 class Project:
@@ -35,10 +35,12 @@ class Project:
     def register(conf, name, folder):
         project = Project(conf, name, folder)
         project.recreate_venv()
-        for name in ('production', 'development', 'local'):
-            addconf(name, os.path.join(project.folder, '%s.conf' % name),
-                    venv=project.venvdir)
-        make_default('local', venv=project.venvdir)
+        for file in os.listdir(project.folder):
+            if not file.endswith('.conf'):
+                continue
+            name = file[:-5]
+            file = os.path.join(project.folder, file)
+            addconf(name, file, venv=project.venvdir)
         return project
 
     def __init__(self, conf, name, folder):
