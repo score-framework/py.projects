@@ -91,10 +91,6 @@ class ConfiguredProjectModule(ConfiguredModule):
     def delete(self, name):
         project = self.get(name)
         try:
-            shutil.rmtree(project.folder)
-        except FileNotFoundError:
-            pass
-        try:
             shutil.rmtree(project.venvdir)
         except FileNotFoundError:
             pass
