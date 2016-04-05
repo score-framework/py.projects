@@ -50,14 +50,16 @@ class Project:
 
     def recreate_venv(self):
         self.vex('--make', 'true')
-        self.install()
+        self.vex('pip', 'install', '--upgrade', 'pip')
+        self.vex('pip', 'install', 'score.cli')
+        self.vex('pip', 'install', '--editable', self.folder)
 
     def install(self):
         self.vex('pip', 'install', '--upgrade', 'pip')
         self.vex('pip', 'install', '--editable', self.folder)
 
     def spawn_shell(self):
-        self.vex('--path', self.venvdir, '--cwd', self.folder)
+        self.vex('--cwd', self.folder)
 
     def vex(self, *args):
         environ = os.environ.copy()
