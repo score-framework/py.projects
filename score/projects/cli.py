@@ -56,6 +56,9 @@ def main(clickctx):
 @click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
 def create(clickctx, template, folder, name=None, package=None):
+    """
+    Create a new project
+    """
     if not srcvalid(template):
         raise click.ClickException('Could not find template "%s"' % template)
     if os.path.exists(folder):
@@ -91,6 +94,9 @@ def create(clickctx, template, folder, name=None, package=None):
 @click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
 def register(clickctx, folder, name=None):
+    """
+    Register a folder as a new project
+    """
     if not name:
         name = os.path.basename(folder)
     folder = os.path.abspath(folder)
@@ -101,11 +107,10 @@ def register(clickctx, folder, name=None):
 @click.argument('project')
 @click.pass_context
 def delete(clickctx, project):
+    """
+    Delete a project's virtualenv
+    """
     project = _get_project(clickctx, project)
-    click.confirm(textwrap.dedent('''
-        Will delete the project %s at this location:
-        %s
-    ''' % (project.name, project.folder)).strip(), abort=True)
     clickctx.obj['projects'].delete(project)
 
 
@@ -114,6 +119,9 @@ def delete(clickctx, project):
 @click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
 def move(clickctx, project, folder):
+    """
+    Move a project somehwere else
+    """
     project = _get_project(clickctx, project)
     if os.sep not in folder:
         folder = os.path.join(os.getcwd(), folder)
@@ -130,6 +138,9 @@ def move(clickctx, project, folder):
 @click.argument('newname')
 @click.pass_context
 def rename(clickctx, project, newname):
+    """
+    Change the name of a project
+    """
     project = _get_project(clickctx, project)
     clickctx.obj['projects'].rename(project, newname)
 
@@ -137,6 +148,9 @@ def rename(clickctx, project, newname):
 @main.command()
 @click.pass_context
 def list(clickctx):
+    """
+    List all known projects
+    """
     for project in clickctx.obj['projects']:
         print('%s: %s' % (project.name, project.folder))
 
@@ -145,6 +159,9 @@ def list(clickctx):
 @click.argument('project')
 @click.pass_context
 def load(clickctx, project):
+    """
+    Enter a project's virtualenv
+    """
     _get_project(clickctx, project).spawn_shell()
 
 

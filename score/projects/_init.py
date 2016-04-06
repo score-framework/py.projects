@@ -36,13 +36,28 @@ defaults = {
 }
 
 
-def init(confdict):
+def init(confdict={}):
+    """
+    Initializes this module acoording to :ref:`our module initialization
+    guidelines <module_initialization>`.
+    """
     conf = defaults.copy()
     conf.update(confdict)
-    return ConfiguredProjectModule()
+    return ConfiguredProjectsModule()
 
 
-class ConfiguredProjectModule(ConfiguredModule):
+class ConfiguredProjectsModule(ConfiguredModule):
+    """
+    This module's :class:`score.init.ConfiguredModule`. It also acts as an
+    iterator, yielding all known projects:
+
+    .. code-block:: python
+
+        >>> import score.projects
+        >>> for project in score.projects.init():
+        ...     print(project.name)
+        ...
+    """
 
     def __init__(self):
         import score.projects
@@ -65,8 +80,11 @@ class ConfiguredProjectModule(ConfiguredModule):
         except StopIteration:
             raise ProjectNotFound(name)
 
-    def relocate(self, name, folder):
-        project = self.get(name)
+    def relocate(self, project, folder):
+        """
+        Moves the code folder of given *project* to the specified *folder*.
+        """
+        project = self.get(project)
         shutil.move(project.folder, folder)
         configurations = name2file(include_global=False, venv=project.venvdir)
         for name, path in configurations.items():
