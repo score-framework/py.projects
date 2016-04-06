@@ -49,6 +49,15 @@ class ConfiguredProjectModule(ConfiguredModule):
         super().__init__(score.projects)
 
     def get(self, name):
+        """
+        Returns the project with given *name*, raising a ProjectNotFound, if no
+        such project was encountered.
+
+        The *name* can also ba an instance of :class:`Project`, in which case it
+        will be returned immediately. This makes the rest of the API quite
+        convenient: it does not matter, whether you pass a :class:`Project`
+        object, or a project name.
+        """
         if isinstance(name, Project):
             return name
         try:
@@ -74,8 +83,18 @@ class ConfiguredProjectModule(ConfiguredModule):
         self._write_conf(settings)
         return project
 
-    def rename(self, oldname, newname):
-        project = self.get(oldname)
+    def rename(self, project, newname):
+        """
+        Changes the name of a given *project* to *newname*. The *project* can be
+        anything accepted by :meth:`get`.
+
+        .. note::
+
+            Since the folder path of a project's virtual environment depends on
+            its name, the function will also delete the project's old virtualenv
+            and create a new one.
+        """
+        project = self.get(project)
         oldname = project.name
         try:
             shutil.rmtree(project.venvdir)
@@ -88,8 +107,12 @@ class ConfiguredProjectModule(ConfiguredModule):
         settings[newname] = {'folder': project.folder}
         self._write_conf(settings)
 
-    def delete(self, name):
-        project = self.get(name)
+    def delete(self, project):
+        """
+        Deletes the virtualenv of given *project*. The *project* can be anything
+        accepted by :meth:`get`.
+        """
+        project = self.get(project)
         try:
             shutil.rmtree(project.venvdir)
         except FileNotFoundError:
@@ -100,15 +123,23 @@ class ConfiguredProjectModule(ConfiguredModule):
         return project
 
     def register(self, name, folder):
+        """
+        Registers a new project with given *name* and associates it with the
+        given *folder*.
+        """
         if name in self.all():
             raise ValueError('Project "%s" already exists' % name)
-        project = Project.register(self, name, folder)
+        project = Project(self, name, folder)
+        project.recreate_venv()
         settings = self._read_conf()
         settings[name] = {'folder': folder}
         self._write_conf(settings)
         return project
 
     def all(self):
+        """
+        Returns a `dict` mapping project names to :class:`Project` objects.
+        """
         return dict((p.name, p) for p in self)
 
     def __iter__(self):
@@ -134,4 +165,7 @@ class ConfiguredProjectModule(ConfiguredModule):
 
 
 class ProjectNotFound(Exception):
+    """
+    Raised when a requested project could not be found.
+    """
     pass

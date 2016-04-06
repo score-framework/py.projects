@@ -27,21 +27,15 @@
 import os
 from vex.main import _main as vex_main
 from score.cli.conf import rootdir, add as addconf
+import shutil
 
 
 class Project:
-
-    @staticmethod
-    def register(conf, name, folder):
-        project = Project(conf, name, folder)
-        project.recreate_venv()
-        for file in os.listdir(project.folder):
-            if not file.endswith('.conf'):
-                continue
-            name = file[:-5]
-            file = os.path.join(project.folder, file)
-            addconf(name, file, venv=project.venvdir)
-        return project
+    """
+    A Project representation, basically consisting of (1) a name, defining the
+    projects virtual environment path, and (2) a project folder, where a python
+    package is expected (including its setup.py).
+    """
 
     def __init__(self, conf, name, folder):
         self.conf = conf
@@ -49,22 +43,49 @@ class Project:
         self.folder = folder
 
     def recreate_venv(self):
+        """
+        (Re-)creates this project's virtual environment, deleting the old
+        virtualenv folder, if one is found. Afterwards, it will register all
+        configuration files (files in the project's root folder, that end on
+        '.conf') as configuration files, so that they are available to the score
+        CLI inside the virtual environment.
+        """
+        try:
+            shutil.rmtree(self.venvdir)
+        except FileNotFoundError:
+            pass
         self.vex('--make', 'true')
         self.vex('pip', 'install', '--upgrade', 'pip')
         self.vex('pip', 'install', 'score.cli')
         self.vex('pip', 'install', '--editable', self.folder)
+        for file in os.listdir(self.folder):
+            if not file.endswith('.conf'):
+                continue
+            name = file[:-5]
+            file = os.path.join(self.folder, file)
+            addconf(name, file, venv=self.venvdir)
 
     def install(self):
+        """
+        Executes the ``setup.py`` in this project's root folder.
+        """
         self.vex('pip', 'install', '--upgrade', 'pip')
         self.vex('pip', 'install', '--editable', self.folder)
 
     def spawn_shell(self):
-        self.vex('--cwd', self.folder)
+        """
+        Spawns a shell in this project's root folder.
+        """
+        self.vex()
 
     def vex(self, *args):
+        """
+        Executes a *vex* command in this project's virtualenv. The *args* are
+        the command-line arguments to the *vex* command.
+        """
         environ = os.environ.copy()
         environ['VIRTUAL_ENV_NAME'] = self.name
-        vex_main(environ, ('--path', self.venvdir) + args)
+        vex_main(environ, ('--path', self.venvdir, '--cwd', self.folder) + args)
 
     @property
     def venvdir(self):
