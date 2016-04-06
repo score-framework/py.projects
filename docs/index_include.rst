@@ -165,10 +165,10 @@ Project
         dynamically generated and will change if you change the project name
         (by setting a new value).
 
-    .. automethod:: recreate_venv
+    .. automethod:: score.projects.project.Project.recreate_venv
 
-    .. automethod:: install
+    .. automethod:: score.projects.project.Project.install
 
-    .. automethod:: spawn_shell
+    .. automethod:: score.projects.project.Project.spawn_shell
 
-    .. automethod:: vex
+    .. automethod:: score.projects.project.Project.vex
