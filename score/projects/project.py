@@ -85,6 +85,9 @@ class Project:
         """
         environ = os.environ.copy()
         environ['VIRTUAL_ENV_NAME'] = self.name
+        # see https://github.com/sashahart/vex/issues/46
+        # and https://github.com/pypa/virtualenv/issues/322
+        environ.pop('__PYVENV_LAUNCHER__', None)
         vex_main(environ, ('--path', self.venvdir, '--cwd', self.folder) + args)
 
     @property
