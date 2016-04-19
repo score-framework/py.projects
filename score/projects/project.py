@@ -29,6 +29,7 @@ from vex.main import _main as vex_main
 from score.cli.conf import (
     rootdir, add as addconf, make_default as make_default_conf)
 import shutil
+import sys
 
 
 class Project:
@@ -55,7 +56,7 @@ class Project:
             shutil.rmtree(self.venvdir)
         except FileNotFoundError:
             pass
-        self.vex('--make', 'true')
+        self.vex('--python', sys.executable, '--make', 'true')
         self.vex('pip', 'install', '--upgrade', 'pip')
         self.vex('pip', 'install', 'score.cli')
         self.vex('pip', 'install', '--editable', self.folder)
