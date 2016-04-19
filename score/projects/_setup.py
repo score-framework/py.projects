@@ -12,9 +12,9 @@ def update_prompt():
             # This next line updates your shell prompt to include the name of
             # the current project.
             if [ -n "$VIRTUAL_ENV_NAME" ]; then
-                export PROMPT="%{[0;33m%}(${VIRTUAL_ENV_NAME})%{[0m%}$PROMPT"
+                export PS1="\[[0;33m\](${VIRTUAL_ENV_NAME})\[[0m\]$PS1"
             elif [ -n "$VIRTUAL_ENV" ]; then
-                export PROMPT="%{[0;33m%}(${VIRTUAL_ENV##*/})%{[0m%}$PROMPT"
+                export PS1="\[[0;33m\](${VIRTUAL_ENV##*/})\[[0m\]$PS1"
             fi
         ''').strip()
 
