@@ -58,7 +58,7 @@ class Project:
             pass
         create_args = ['--python', sys.executable, '--make', 'true']
         if site_packages:
-            create_args.append('--site-packages')
+            create_args.insert(-1, '--site-packages')
         self.vex(*create_args)
         self.vex('pip', 'install', '--upgrade', 'pip')
         self.vex('pip', 'install', 'score.cli')
