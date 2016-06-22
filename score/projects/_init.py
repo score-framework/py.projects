@@ -24,7 +24,7 @@
 # the discretion of STRG.AT GmbH also the competent court, in whose district the
 # Licensee has his registered seat, an establishment or assets.
 
-from score.init import ConfiguredModule
+from score.init import ConfiguredModule, parse_bool
 from .project import Project
 import os
 from score.cli.conf import rootdir, name2file, add as addconf, get_origin
@@ -119,8 +119,12 @@ class ConfiguredProjectsModule(ConfiguredModule):
         except FileNotFoundError:
             pass
         project.name = newname
-        project.recreate_venv()
         settings = self._read_conf()
+        try:
+            site_packages = parse_bool(settings[oldname]['site_packages'])
+        except:
+            site_packages = False
+        project.recreate_venv(site_packages=site_packages)
         del settings[oldname]
         settings[newname] = {'folder': project.folder}
         self._write_conf(settings)
@@ -140,7 +144,7 @@ class ConfiguredProjectsModule(ConfiguredModule):
         self._write_conf(settings)
         return project
 
-    def register(self, name, folder):
+    def register(self, name, folder, site_packages=False):
         """
         Registers a new project with given *name* and associates it with the
         given *folder*.
@@ -148,9 +152,12 @@ class ConfiguredProjectsModule(ConfiguredModule):
         if name in self.all():
             raise ValueError('Project "%s" already exists' % name)
         project = Project(self, name, folder)
-        project.recreate_venv()
+        project.recreate_venv(site_packages=site_packages)
         settings = self._read_conf()
-        settings[name] = {'folder': folder}
+        settings[name] = {
+            'folder': folder,
+            'site_packages': str(site_packages)
+        }
         self._write_conf(settings)
         return project
 

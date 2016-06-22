@@ -60,7 +60,7 @@ def prepare(src, dst):
     elif src.startswith('git:'):
         download_git(src, dst)
     elif src.startswith('hg+'):
-        download_hg(src[4:], dst)
+        download_hg(src[3:], dst)
     elif os.path.isdir(src):
         copy_tree(src, dst)
     elif os.path.isdir(os.path.join(os.path.dirname(__file__),
