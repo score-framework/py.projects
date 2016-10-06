@@ -61,7 +61,8 @@ class Project:
             create_args.insert(-1, '--site-packages')
         self.vex(*create_args)
         self.vex('pip', 'install', '--upgrade', 'pip')
-        self.vex('pip', 'install', 'score.cli')
+        self.vex('pip', 'install', '--upgrade',
+                 '--force-reinstall', 'score.cli')
         self.vex('pip', 'install', '--editable', self.folder)
         for file in os.listdir(self.folder):
             if not file.endswith('.conf'):
