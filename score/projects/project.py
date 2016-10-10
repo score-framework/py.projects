@@ -60,10 +60,9 @@ class Project:
         if site_packages:
             create_args.insert(-1, '--site-packages')
         self.vex(*create_args)
-        self.vex('pip', 'install', '--upgrade', 'pip')
+        self.install()
         self.vex('pip', 'install', '--upgrade',
                  '--force-reinstall', 'score.cli')
-        self.vex('pip', 'install', '--editable', self.folder)
         for file in os.listdir(self.folder):
             if not file.endswith('.conf'):
                 continue
@@ -76,8 +75,9 @@ class Project:
         """
         Executes the ``setup.py`` in this project's root folder.
         """
-        self.vex('pip', 'install', '--upgrade', 'pip')
-        self.vex('pip', 'install', '--editable', self.folder)
+        if os.path.exists(os.path.join(self.folder, 'setup.py')):
+            self.vex('pip', 'install', '--upgrade', 'pip')
+            self.vex('pip', 'install', '--editable', self.folder)
 
     def spawn_shell(self):
         """
