@@ -46,7 +46,6 @@ def main(clickctx):
         conf['score.init'] = {}
     conf['score.init']['modules'] = 'score.projects'
     clickctx.obj['projects'] = score_init(conf).projects
-    return
 
 
 @main.command()
