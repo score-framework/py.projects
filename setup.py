@@ -60,7 +60,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Application Frameworks',
     ],
     install_requires=[
-        'score.cli >= 0.2.13',
+        'score.cli >= 0.2.25',
         'score.init',
         'vex',
     ],

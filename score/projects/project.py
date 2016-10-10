@@ -27,7 +27,8 @@
 import os
 from vex.main import _main as vex_main
 from score.cli.conf import (
-    rootdir, add as addconf, make_default as make_default_conf)
+    InvalidConfigurationNameException, rootdir,
+    add as addconf, make_default as make_default_conf)
 import shutil
 import sys
 
@@ -68,8 +69,12 @@ class Project:
                 continue
             name = file[:-5]
             file = os.path.join(self.folder, file)
-            addconf(name, file, venv=self.venvdir)
-            make_default_conf(name, venv=self.venvdir)
+            try:
+                addconf(name, file, venv=self.venvdir)
+            except InvalidConfigurationNameException:
+                pass
+            else:
+                make_default_conf(name, venv=self.venvdir)
 
     def install(self):
         """
