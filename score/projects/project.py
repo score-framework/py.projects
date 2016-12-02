@@ -81,7 +81,6 @@ class Project:
         Executes the ``setup.py`` in this project's root folder.
         """
         if os.path.exists(os.path.join(self.folder, 'setup.py')):
-            self.vex('pip', 'install', '--upgrade', 'pip')
             self.vex('pip', 'install', '--editable', self.folder)
 
     def spawn_shell(self):
