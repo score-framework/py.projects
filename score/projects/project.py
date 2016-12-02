@@ -78,8 +78,10 @@ class Project:
 
     def install(self):
         """
-        Executes the ``setup.py`` in this project's root folder.
+        Installs ``requirements.txt`` and ``setup.py`` in this project's folder.
         """
+        if os.path.exists(os.path.join(self.folder, 'requirements.txt')):
+            self.vex('pip', 'install', '--requirement', 'requirements.txt')
         if os.path.exists(os.path.join(self.folder, 'setup.py')):
             self.vex('pip', 'install', '--editable', self.folder)
 
