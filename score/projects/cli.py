@@ -35,6 +35,31 @@ from ._tpl import prepare, srcvalid, copy as copytpl
 from ._init import ProjectNotFound
 
 
+def project_name(name, folder):
+    """
+    Helper for deriving a project name if there no explicit name was given.
+
+    Accepts an explicit *name*, as given in an option during CLI invocation. If
+    this value contains a string, it will be returned unprocessed and the second
+    argument is ignored.
+
+    But if *name* is `None`, the project name is derived from the folder name.
+
+    Example:
+
+    >>> project_name('foo', 'I will be ignored')
+    'foo'
+    >>> project_name(None, '/path/to/some/folder')
+    'folder'
+    """
+    if name:
+        return name
+    name = os.path.basename(folder)
+    if name == '.':
+        name = os.path.basename(os.getcwd())
+    return name
+
+
 @click.group()
 @click.pass_context
 def main(clickctx):
@@ -64,8 +89,7 @@ def create(clickctx, template, folder, site_packages,
         raise click.ClickException('Could not find template "%s"' % template)
     if os.path.exists(folder):
         raise click.ClickException('Folder already exists')
-    if not name:
-        name = os.path.basename(folder)
+    name = project_name(name, folder)
     if name in clickctx.obj['projects']:
         raise click.ClickException('Project %s already exists' % name)
     if not package:
@@ -101,8 +125,7 @@ def register(clickctx, folder, site_packages, name=None):
     """
     Register a folder as a new project
     """
-    if not name:
-        name = os.path.basename(folder)
+    name = project_name(name, folder)
     folder = os.path.abspath(folder)
     project = clickctx.obj['projects'].register(
         name, folder, site_packages=site_packages)
