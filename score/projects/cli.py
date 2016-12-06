@@ -35,7 +35,7 @@ from ._tpl import prepare, srcvalid, copy as copytpl
 from ._init import ProjectNotFound
 
 
-def project_name(name, folder):
+def _project_name(name, folder):
     """
     Helper for deriving a project name if there no explicit name was given.
 
@@ -47,9 +47,9 @@ def project_name(name, folder):
 
     Example:
 
-    >>> project_name('foo', 'I will be ignored')
+    >>> _project_name('foo', 'I will be ignored')
     'foo'
-    >>> project_name(None, '/path/to/some/folder')
+    >>> _project_name(None, '/path/to/some/folder')
     'folder'
     """
     if name:
@@ -58,6 +58,16 @@ def project_name(name, folder):
     if name == '.':
         name = os.path.basename(os.getcwd())
     return name
+
+
+def _get_project(clickctx, name):
+    """
+    Returns the project with given *name* or raises a ClickException.
+    """
+    try:
+        return clickctx.obj['projects'][name]
+    except ProjectNotFound:
+        raise click.ClickException('No project called "%s"' % name)
 
 
 @click.group()
@@ -89,7 +99,7 @@ def create(clickctx, template, folder, site_packages,
         raise click.ClickException('Could not find template "%s"' % template)
     if os.path.exists(folder):
         raise click.ClickException('Folder already exists')
-    name = project_name(name, folder)
+    name = _project_name(name, folder)
     if name in clickctx.obj['projects']:
         raise click.ClickException('Project %s already exists' % name)
     if not package:
@@ -125,7 +135,7 @@ def register(clickctx, folder, site_packages, name=None):
     """
     Register a folder as a new project
     """
-    name = project_name(name, folder)
+    name = _project_name(name, folder)
     folder = os.path.abspath(folder)
     project = clickctx.obj['projects'].register(
         name, folder, site_packages=site_packages)
@@ -149,7 +159,7 @@ def delete(clickctx, project):
 @click.pass_context
 def move(clickctx, project, folder):
     """
-    Move a project somehwere else
+    Move a project somewhere else
     """
     project = _get_project(clickctx, project)
     if os.sep not in folder:
@@ -192,13 +202,6 @@ def load(clickctx, project):
     Enter a project's virtualenv
     """
     _get_project(clickctx, project).spawn_shell()
-
-
-def _get_project(clickctx, name):
-    try:
-        return clickctx.obj['projects'][name]
-    except ProjectNotFound:
-        raise click.ClickException('No project called "%s"' % name)
 
 
 if __name__ == '__main__':
