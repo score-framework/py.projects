@@ -142,12 +142,12 @@ def register(clickctx, folder, site_packages, name=None):
     project.spawn_shell()
 
 
-@main.command()
+@main.command('rm')
 @click.argument('project')
 @click.pass_context
-def delete(clickctx, project):
+def remove(clickctx, project):
     """
-    Delete a project's virtualenv
+    Remove a project's virtualenv
     """
     project = _get_project(clickctx, project)
     clickctx.obj['projects'].delete(project)
