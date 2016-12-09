@@ -5,7 +5,7 @@ from score.cli.setup import BashrcModifier, ZshrcModifier
 class UpdateBashPrompt(BashrcModifier):
 
     def test_if_installed(self):
-        return 'VIRTUAL_ENV_NAME' in self.read_file()
+        return 'VIRTUAL_ENV_NAME' in self.read_file('')
 
     def get_short_description(self):
         return "Add current project name to bash PROMPT"
