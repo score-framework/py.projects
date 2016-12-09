@@ -1,14 +1,28 @@
 import textwrap
-from score.cli.setup import append_to_bashrc, append_to_zshrc
+from score.cli.setup import BashrcModifier, ZshrcModifier
 
 
-def update_prompt():
+class UpdateBashPrompt(BashrcModifier):
 
-    def test_exists(rcfile, content):
-        return 'VIRTUAL_ENV_NAME' in content
+    def test_if_installed(self):
+        return 'VIRTUAL_ENV_NAME' in self.read_file()
 
-    def gen_bash_prompt():
-        return textwrap.dedent(r'''
+    def get_short_description(self):
+        return "Add current project name to bash PROMPT"
+
+    def get_description(self):
+        return '''
+            This step will update your ~/.bashrc file to add show the current
+            project name in your shell prompt.
+
+            We will create a backup of your ~/.bashrc file before changing it,
+            But if you are not comfortable with automatically modifying your
+            bash configuration file, you can add these lines manually:
+
+              ''' + textwrap.indent(self.snippet, '            ').lstrip()
+
+    def get_snippet(self):
+        return r'''
             # This next line updates your shell prompt to include the name of
             # the current project.
             if [ -n "$VIRTUAL_ENV_NAME" ]; then
@@ -16,9 +30,22 @@ def update_prompt():
             elif [ -n "$VIRTUAL_ENV" ]; then
                 export PS1="\[[0;33m\](${VIRTUAL_ENV##*/})\[[0m\]$PS1"
             fi
-        ''').strip()
+        '''
 
-    def gen_zsh_prompt():
+
+class UpdateZshPrompt(ZshrcModifier):
+
+    test_if_installed = UpdateBashPrompt.test_if_installed
+
+    def get_short_description(self):
+        return UpdateBashPrompt.get_short_description(self).\
+            replace('bash', 'zsh')
+
+    def get_description(self):
+        return UpdateBashPrompt.get_description(self).\
+            replace('bash', 'zsh')
+
+    def get_snippet(self):
         return textwrap.dedent(r'''
             # This next line updates your shell prompt to include the name of
             # the current project.
@@ -28,6 +55,3 @@ def update_prompt():
                 export PROMPT="%{[0;33m%}(${VIRTUAL_ENV##*/})%{[0m%}$PROMPT"
             fi
         ''').strip()
-
-    append_to_bashrc('projects', test_exists, gen_bash_prompt)
-    append_to_zshrc('projects', test_exists, gen_zsh_prompt)
