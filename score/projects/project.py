@@ -45,7 +45,7 @@ class Project:
         self.name = name
         self.folder = folder
 
-    def recreate_venv(self, site_packages=False):
+    def recreate_venv(self, *, python=None, site_packages=False):
         """
         (Re-)creates this project's virtual environment, deleting the old
         virtualenv folder, if one is found. Afterwards, it will register all
@@ -57,7 +57,9 @@ class Project:
             shutil.rmtree(self.venvdir)
         except FileNotFoundError:
             pass
-        create_args = ['--python', sys.executable, '--make', 'true']
+        if python is None:
+            python = sys.executable
+        create_args = ['--python', python, '--make', 'true']
         if site_packages:
             create_args.insert(-1, '--site-packages')
         self.vex(*create_args)

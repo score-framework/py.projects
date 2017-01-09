@@ -144,7 +144,7 @@ class ConfiguredProjectsModule(ConfiguredModule):
         self._write_conf(settings)
         return project
 
-    def register(self, name, folder, site_packages=False):
+    def register(self, name, folder, *, python=None, site_packages=False):
         """
         Registers a new project with given *name* and associates it with the
         given *folder*.
@@ -152,7 +152,7 @@ class ConfiguredProjectsModule(ConfiguredModule):
         if name in self.all():
             raise ValueError('Project "%s" already exists' % name)
         project = Project(self, name, folder)
-        project.recreate_venv(site_packages=site_packages)
+        project.recreate_venv(python=python, site_packages=site_packages)
         settings = self._read_conf()
         settings[name] = {
             'folder': folder,

@@ -87,10 +87,11 @@ def main(clickctx):
 @click.option('-n', '--name')
 @click.option('-p', '--package')
 @click.option('-t', '--template', default='minimal')
+@click.option('--python', nargs=1, default=None)
 @click.option('--system-site-packages', 'site_packages', is_flag=True)
 @click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
-def create(clickctx, template, folder, site_packages,
+def create(clickctx, template, folder, python, site_packages,
            name=None, package=None):
     """
     Create a new project
@@ -122,23 +123,24 @@ def create(clickctx, template, folder, site_packages,
             '__PACKAGE_NAME_CAMELCASE__': package_camelcase,
         })
     project = clickctx.obj['projects'].register(
-        name, folder, site_packages=site_packages)
+        name, folder, python=python, site_packages=site_packages)
     project.spawn_shell()
 
 
 @main.command()
 @click.option('-n', '--name')
+@click.option('--python', nargs=1, default=None)
 @click.option('--system-site-packages', 'site_packages', is_flag=True)
 @click.argument('folder', type=click.Path(file_okay=False, dir_okay=True))
 @click.pass_context
-def register(clickctx, folder, site_packages, name=None):
+def register(clickctx, folder, python, site_packages, name=None):
     """
     Register a folder as a new project
     """
     name = _project_name(name, folder)
     folder = os.path.abspath(folder)
     project = clickctx.obj['projects'].register(
-        name, folder, site_packages=site_packages)
+        name, folder, python=python, site_packages=site_packages)
     project.spawn_shell()
 
 
