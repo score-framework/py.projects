@@ -66,6 +66,7 @@ class Project:
         self.install()
         self.vex('pip', 'install', '--upgrade',
                  '--force-reinstall', 'score.cli')
+        self.vex('pip', 'install', '--upgrade', 'pip')
         for file in os.listdir(self.folder):
             if not file.endswith('.conf'):
                 continue
