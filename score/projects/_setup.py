@@ -1,3 +1,4 @@
+# vim: set fileencoding=UTF-8
 import textwrap
 from score.cli.setup import BashrcModifier, ZshrcModifier
 
