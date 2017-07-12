@@ -54,7 +54,7 @@ def _project_name(name, folder):
     """
     if name:
         return name
-    name = os.path.basename(folder)
+    name = os.path.basename(folder.rstrip(''.join({os.sep, '/'})))
     if name == '.':
         name = os.path.basename(os.getcwd())
     return name
